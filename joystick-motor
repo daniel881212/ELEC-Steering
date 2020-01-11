@@ -1,0 +1,169 @@
+// Adding servo library
+#include <Servo.h>
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
+// defining joystick pins (analog)
+int joyX = 0;
+int joyY = 1;
+int joyVal;
+int xValue;
+int yValue;
+int avg;
+int NeutralPos = 90;
+int UpperLimit = 650;
+int LowerLimit = 350;
+void setup() {
+  Serial.begin(9600);
+  servo1.attach(3);
+  servo2.attach(5);
+  servo3.attach(6);
+  servo4.attach(9);
+}
+
+
+void loop() {
+  xValue = analogRead(joyX);
+  yValue = analogRead(joyY);
+  Serial.print(xValue);
+  Serial.print("\t");
+  Serial.println(yValue);
+  //delay(250);
+  // To Pitch down
+  if ((yValue < LowerLimit) && (LowerLimit <= xValue <= UpperLimit)) { // changed to y < lower
+    yValue = analogRead(joyY);
+    xValue = analogRead(joyX);
+    if (xValue > UpperLimit || xValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      yValue = map(yValue, 0, 1023, 0, 180);
+      writeAngles(yValue, 180 - yValue, 180 - yValue, yValue);
+    }
+  }
+  
+  // To Pitch Up
+  else if ((yValue > UpperLimit) && (LowerLimit <= xValue <= UpperLimit)) { //changed to y > upper
+    yValue = analogRead(joyY);
+    xValue = analogRead(joyX);
+    if (xValue > UpperLimit || xValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      yValue = map(yValue, 0, 1023, 0, 180);
+      writeAngles(yValue, 180 - yValue, 180 - yValue, yValue);
+    }
+  }
+  
+  // To turn starboard
+  else if ((xValue < LowerLimit) && (LowerLimit <= yValue <= UpperLimit)) { // changed to x < lower
+    xValue = analogRead(joyX);
+    yValue = analogRead(joyY);
+    if (yValue > UpperLimit || yValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      xValue = map(xValue, 0, 1023, 0, 180);
+      writeAngles(-xValue, -xValue, xValue, xValue);
+    }
+  }
+  
+  // To turn portside
+  else if ((xValue > UpperLimit) && (LowerLimit <= yValue <= UpperLimit)) { // changed to x > upper
+    xValue = analogRead(joyX);
+    yValue = analogRead(joyY);
+    if (yValue > UpperLimit || yValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      xValue = map(xValue, 0, 1023, 0, 180);
+      writeAngles(180 - xValue, 180 - xValue, xValue, xValue);
+    }
+  }
+
+  // 45 degrees
+  else if ((xValue < LowerLimit) && (yValue > UpperLimit)) {
+    xValue = analogRead(joyX);
+    yValue = analogRead(joyY);
+    if (yValue > UpperLimit || yValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      int squareRoot = sqrt(xValue * xValue + yValue * yValue);
+      int actual = map(squareRoot, 0, 1023, 0, 180);
+      writeAngles(NeutralPos, 180 - actual, NeutralPos, actual);
+    }
+  }
+
+  // 135 degrees
+  else if ((xValue > UpperLimit) && (yValue > UpperLimit)) {
+    xValue = analogRead(joyX);
+    yValue = analogRead(joyY);
+    if (yValue > UpperLimit || yValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      int squareRoot = sqrt(xValue * xValue + yValue * yValue);
+      int actual = map(squareRoot, 0, 1023, 0, 180);
+      writeAngles(actual, NeutralPos, 180 - actual, NeutralPos);
+    }
+  }
+
+  // 225 degrees
+  else if ((xValue > UpperLimit) && (LowerLimit > yValue)) {
+    xValue = analogRead(joyX);
+    yValue = analogRead(joyY);
+    if (yValue > UpperLimit || yValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      int squareRoot = sqrt(xValue * xValue + yValue * yValue);
+      int actual = map(squareRoot, 0, 1023, 0, 180);
+      writeAngles(NeutralPos, actual, NeutralPos, 180 - actual);
+    }
+  }
+  
+  // 315 degrees
+  else if ((xValue < LowerLimit) && (LowerLimit > yValue)) {
+    xValue = analogRead(joyX);
+    yValue = analogRead(joyY);
+    if (yValue > UpperLimit || yValue < LowerLimit) {
+      calibration();
+    }
+    else {
+      int squareRoot = sqrt(xValue * xValue + yValue * yValue);
+      int actual = map(squareRoot, 0, 1023, 0, 180);
+      writeAngles(180 - actual, NeutralPos, actual, NeutralPos);
+    }
+  }
+  
+  // Resetting the motors if no input
+  else if ((LowerLimit <= xValue <= UpperLimit) && (LowerLimit <= yValue <= UpperLimit)) {
+    calibration();
+  }  
+}
+
+
+
+// Helper Functions 
+
+void calibration() {
+  servo1.write(NeutralPos);
+  servo2.write(NeutralPos);
+  servo3.write(NeutralPos);
+  servo4.write(NeutralPos);
+}
+
+void writeAngles(int one, int two, int three, int four) {
+  servo1.write(one);
+  servo2.write(two);
+  servo3.write(three);
+  servo4.write(four);
+}
+
+
+
+
+
+
